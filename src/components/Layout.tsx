@@ -1,3 +1,7 @@
+/**
+ * Layout — ProofPass app shell with sticky header and footer.
+ * @version 1.1.0
+ */
 import React from 'react';
 
 interface LayoutProps {
