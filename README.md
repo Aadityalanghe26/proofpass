@@ -155,3 +155,9 @@ See [docs/USAGE.md](docs/USAGE.md) for a full step-by-step guide written for non
 ## Product X Profile
 
 [PLACEHOLDER — add your product X (Twitter) profile link here after creating the account]
+
+---
+
+## Contributing
+
+Pull requests are welcome. For major changes, open an issue first to discuss what you would like to change. Please make sure tests pass before submitting a PR.
