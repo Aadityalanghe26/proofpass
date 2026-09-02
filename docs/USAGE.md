@@ -77,3 +77,13 @@ The SEC threshold enforced:
 
 **The app shows a blank page**
 → Hard-refresh (Ctrl+Shift+R or Cmd+Shift+R). If it persists, open DevTools (F12) → Console and check for errors, then open an issue on GitHub.
+
+---
+
+## FAQ
+
+**Is ProofPass free to use?**
+Yes. The only cost is the tiny Midnight network fee (tDUST) for submitting the proof transaction.
+
+**Can I use ProofPass for real investment platforms?**
+ProofPass is currently on Preprod (testnet). Mainnet deployment is planned after audit.
