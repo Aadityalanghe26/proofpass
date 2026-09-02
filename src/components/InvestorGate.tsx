@@ -3,6 +3,7 @@ import { useMidnight } from '../hooks/useMidnight';
 
 /**
  * InvestorGate — Core Privacy Feature UI
+ * @version 1.1.0
  *
  * The user enters their income and/or net worth locally.
  * Both values are used as private witnesses inside the ZK circuit —
