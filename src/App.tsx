@@ -1,3 +1,8 @@
+/**
+ * App — ProofPass root component.
+ * @version 1.1.0
+ * Flow: connect wallet → enter financial data → generate ZK proof → on-chain result.
+ */
 import React, { useState } from 'react';
 import Layout from './components/Layout';
 import WalletConnect from './components/WalletConnect';
