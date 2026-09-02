@@ -154,7 +154,7 @@ See [docs/USAGE.md](docs/USAGE.md) for a full step-by-step guide written for non
 
 ## Product X Profile
 
-[PLACEHOLDER — add your product X (Twitter) profile link here after creating the account]
+[@AadityaLanghe on X](https://x.com/AadityaLanghe)
 
 ---
 
