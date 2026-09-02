@@ -1,5 +1,6 @@
 /**
  * proofpass.test.ts
+ * @version 1.1.0
  *
  * Tests for the ProofPass — Private Accredited Investor Verification contract.
  * Simulates ZK circuit logic in TypeScript to validate contract behaviour
