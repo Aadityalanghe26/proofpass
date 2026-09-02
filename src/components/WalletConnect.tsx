@@ -1,3 +1,7 @@
+/**
+ * WalletConnect — Lace wallet connection component for ProofPass.
+ * @version 1.1.0
+ */
 import React, { useState } from 'react';
 
 interface WalletConnectProps {
