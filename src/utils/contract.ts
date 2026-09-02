@@ -1,6 +1,7 @@
 /**
  * contract.ts
  * ProofPass — contract interaction helpers.
+ * @version 1.1.0
  *
  * When VITE_CONTRACT_ADDRESS is empty the simulation path is used.
  * When it is set, calls go to the live Preprod/Mainnet contract.
