@@ -51,3 +51,7 @@ No other blockchain platform enforces privacy at the language level.
 - **Wallet**: Lace (Midnight DApp Connector)
 - **Tests**: Vitest (10 passing)
 - **CI/CD**: GitHub Actions
+
+---
+
+*Approved for Level 4 — Midnight Builder Challenge, Rise In*
