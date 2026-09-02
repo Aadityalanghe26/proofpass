@@ -25,7 +25,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="nav-link">
               GitHub
             </a>
-            <a href="/docs/USAGE.md" className="nav-link">Docs</a>
+            <a href="https://github.com/Aadityalanghe26/proofpass/blob/main/docs/USAGE.md" target="_blank" rel="noopener noreferrer" className="nav-link">Docs</a>
           </nav>
         </div>
       </header>
