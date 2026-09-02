@@ -37,7 +37,8 @@ witness user_net_worth(): Uint<64>;
 
 // ---- Circuit: initialize ----
 // Sets the accreditation thresholds. Called once at deploy time.
-// Standard SEC thresholds: income >= $200,000 OR net_worth >= $1,000,000
+// Standard SEC Rule 501 thresholds: income >= $200,000 OR net_worth >= $1,000,000
+// Thresholds are configurable at deploy time for international jurisdictions.
 export circuit initialize(inc_threshold: Uint<64>, nw_threshold: Uint<64>): [] {
   income_threshold    = disclose(inc_threshold);
   networth_threshold  = disclose(nw_threshold);
