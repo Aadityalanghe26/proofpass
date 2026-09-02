@@ -293,3 +293,9 @@ a:hover { text-decoration: underline; }
   .input-grid { grid-template-columns: 1fr; }
   .ledger-state { flex-direction: column; }
 }
+
+/* Focus visible styles for keyboard accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
