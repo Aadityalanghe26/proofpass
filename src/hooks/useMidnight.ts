@@ -1,3 +1,7 @@
+/**
+ * useMidnight — custom hook for ProofPass ZK proof state management.
+ * @version 1.1.0
+ */
 import { useState, useCallback } from 'react';
 import {
   callProveAccreditation,
