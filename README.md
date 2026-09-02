@@ -10,6 +10,10 @@
 
 [https://proofpass-eight.vercel.app](https://proofpass-eight.vercel.app)
 
+## Demo Video
+
+[Watch the MVP demo on Loom](https://www.loom.com/share/71f8b3fbd93141529ea17fc70ce8898e)
+
 ---
 
 ## Contract Address
