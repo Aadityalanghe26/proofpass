@@ -8,7 +8,7 @@
 
 ## Live Demo
 
-[PLACEHOLDER — paste your Vercel/Netlify URL here after deploying the frontend]
+[https://proofpass-eight.vercel.app](https://proofpass-eight.vercel.app)
 
 ---
 
