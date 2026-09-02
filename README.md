@@ -16,7 +16,7 @@
 
 | Network | Address |
 |---------|---------|
-| Preprod | [PLACEHOLDER — paste contract address here after running `midnight deploy`] |
+| Preprod | Deployment pending — Midnight registry unreachable from current network. Contract code is complete at `contracts/proofpass.compact`. Demo runs in simulation mode at the live URL above. |
 
 ---
 
