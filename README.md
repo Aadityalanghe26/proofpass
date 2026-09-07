@@ -24,6 +24,17 @@
 
 ---
 
+## Level 5 — User Validation
+
+- **Target:** 50 Preprod users
+- **Current:** 0 / 50 — [updating as users come in]
+- See [USERS.md](USERS.md) for wallet addresses
+- See [docs/FEEDBACK.md](docs/FEEDBACK.md) for feedback log and changes made
+
+---
+
+---
+
 ## What This Product Does
 
 DeFi investment pools, private sales, and yield vaults are legally required under SEC Rule 501 to restrict access to accredited investors only — individuals with annual income above $200,000 or net worth above $1,000,000. Today, platforms solve this one of two ways: they either ignore the requirement entirely (regulatory risk) or force users to upload government IDs and financial statements to a centralised server (data breach liability). Neither is acceptable.
