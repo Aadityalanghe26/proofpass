@@ -1,0 +1,63 @@
+name: Deploy to Preprod
+
+on:
+  workflow_dispatch:
+    inputs:
+      wallet_seed:
+        description: 'Wallet seed (64-char hex) for deployment'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    name: Compile & Deploy ProofPass to Preprod
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Midnight toolchain
+        run: |
+          curl -sSf https://midnight.network/install.sh | sh || true
+          # Try npm install approach
+          npm config set @midnight-ntwrk:registry https://registry.midnight.network
+          npm install -g @midnight-ntwrk/compact-cli || true
+          compact --version || echo "compact not available via npm, trying PATH"
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          echo "$HOME/.midnight/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Compile Compact contract
+        run: |
+          if command -v compact &> /dev/null; then
+            compact compile contracts/proofpass.compact --output managed/
+            echo "✓ Compact compile succeeded"
+            ls managed/ || echo "No output files"
+          else
+            echo "✗ compact compiler not found"
+            exit 1
+          fi
+
+      - name: Deploy to Preprod
+        env:
+          WALLET_SEED: ${{ inputs.wallet_seed }}
+          NETWORK: preprod
+          INDEXER: https://indexer.testnet-02.midnight.network/api/v1/graphql
+          INDEXER_WS: wss://indexer.testnet-02.midnight.network/api/v1/graphql/ws
+          NODE: https://rpc.testnet-02.midnight.network
+          PROOF_SERVER: https://proof-server.testnet-02.midnight.network
+        run: |
+          node scripts/deploy.mjs
+
+      - name: Output contract address
+        run: |
+          cat deployment.json || echo "No deployment.json found"
