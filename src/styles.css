@@ -299,3 +299,15 @@ a:hover { text-decoration: underline; }
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;
 }
+
+/* Simulation mode badge */
+.sim-badge {
+  font-size: 0.68rem;
+  background: var(--color-warning);
+  color: #000;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  margin-left: 0.5rem;
+}
+.sim-note { color: var(--color-warning); font-size: 0.82rem; }
