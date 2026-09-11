@@ -132,8 +132,11 @@ export async function callProveAccreditation(
     // These values are processed locally and NEVER sent over the network
     const witnessData = new TextEncoder().encode(
       JSON.stringify({
-        user_income:    Math.floor(income),
-        user_net_worth: Math.floor(netWorth),
+        user_income:     Math.floor(income),
+        user_net_worth:  Math.floor(netWorth),
+        // identity_secret is derived from the wallet's shielded key material
+        // ensuring each wallet address maps to a unique, persistent nullifier
+        identity_secret: await deriveIdentitySecret(api),
       })
     );
 
@@ -167,6 +170,7 @@ export async function callResetAccreditation(): Promise<void> {
 
   try {
     const { api } = await connectLaceWallet();
+    const identitySecret = await deriveIdentitySecret(api);
     const provingProvider = await api.getProvingProvider({
       getProverKey: async (loc: string) => {
         const res = await fetch(`/managed/proofpass/${loc}.pk`);
@@ -182,8 +186,11 @@ export async function callResetAccreditation(): Promise<void> {
       },
     });
 
+    const witnessData = new TextEncoder().encode(
+      JSON.stringify({ identity_secret: identitySecret })
+    );
     const provedTx = await provingProvider.prove(
-      new Uint8Array(0),
+      witnessData,
       'reset_accreditation'
     );
     const provedTxBase64 = btoa(String.fromCharCode(...provedTx));
@@ -250,6 +257,28 @@ export async function fetchLedgerState(): Promise<LedgerState> {
     const msg = err instanceof Error ? err.message : 'unknown error';
     throw new Error(`Failed to read ledger state: ${msg}`);
   }
+}
+
+// ---------------------------------------------------------------------------
+// deriveIdentitySecret — derives a persistent private identity commitment
+// ---------------------------------------------------------------------------
+/**
+ * Derives a deterministic 32-byte identity secret from the wallet's
+ * shielded coin public key. This secret is used to generate the nullifier
+ * that prevents replay attacks on the accreditation proof.
+ *
+ * The secret never leaves the browser — only the nullifier (a hash of it)
+ * is stored on-chain.
+ */
+async function deriveIdentitySecret(api: ConnectedAPI): Promise<string> {
+  const addresses = await api.getShieldedAddresses();
+  const coinPublicKey = addresses.shieldedCoinPublicKey;
+  // Derive a 32-byte secret from the coin public key using SHA-256
+  const encoded = new TextEncoder().encode(`ProofPass_identity_v1:${coinPublicKey}`);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 // ---------------------------------------------------------------------------

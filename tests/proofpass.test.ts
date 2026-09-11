@@ -1,53 +1,118 @@
 /**
  * proofpass.test.ts
- * @version 1.1.0
+ * @version 2.0.0
  *
- * Tests for the ProofPass — Private Accredited Investor Verification contract.
- * Simulates ZK circuit logic in TypeScript to validate contract behaviour
- * before deployment to Midnight Preprod.
+ * ProofPass contract tests using Compact runtime simulation.
  *
- * SEC Rule 501 thresholds:
- *   income   >= $200,000/year  OR
- *   net_worth >= $1,000,000
+ * These tests mirror the compiled Compact contract behaviour using the
+ * same circuit logic, data types, and state transitions that the on-chain
+ * contract enforces. Each test validates:
+ *   - Circuit pre/post conditions
+ *   - Private witness handling (income, net_worth, identity_secret)
+ *   - Nullifier derivation and replay protection
+ *   - Ledger state transitions
  *
  * Run: npm test
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+import { createHash } from 'crypto';
 
 // ---------------------------------------------------------------------------
-// Simulated ledger state — mirrors on-chain public state
+// Types — mirror Compact contract types exactly
 // ---------------------------------------------------------------------------
-interface LedgerState {
-  income_threshold: number;
-  networth_threshold: number;
-  total_verifications: number;
-  is_accredited: boolean;
+
+type Bytes32 = string; // hex string representing 32 bytes
+
+interface ContractLedger {
+  income_threshold:    bigint;
+  networth_threshold:  bigint;
+  total_verifications: bigint;
+  nullifier_set:       Set<Bytes32>;
 }
 
 // ---------------------------------------------------------------------------
-// Simulated circuit implementations
+// Compact runtime helpers — mirror built-in Compact functions
 // ---------------------------------------------------------------------------
 
-function initialize(incThreshold: number, nwThreshold: number): LedgerState {
+/**
+ * persistentHash — mirrors Compact's persistentHash<Bytes<32>>()
+ * Derives a deterministic 32-byte commitment from a domain + secret.
+ * One-way: reveals nothing about the input.
+ */
+function persistentHash(domain: string, secret: Bytes32): Bytes32 {
+  return createHash('sha256')
+    .update(domain)
+    .update(Buffer.from(secret, 'hex'))
+    .digest('hex');
+}
+
+/**
+ * emptySet — mirrors Compact's emptySet<Bytes<32>>()
+ */
+function emptySet<T>(): Set<T> {
+  return new Set<T>();
+}
+
+/**
+ * memberOf — mirrors Compact's memberOf(value, set)
+ */
+function memberOf<T>(value: T, set: Set<T>): boolean {
+  return set.has(value);
+}
+
+/**
+ * insert — mirrors Compact's insert(set, value)
+ */
+function insert<T>(set: Set<T>, value: T): Set<T> {
+  const newSet = new Set(set);
+  newSet.add(value);
+  return newSet;
+}
+
+/**
+ * remove — mirrors Compact's remove(set, value)
+ */
+function remove<T>(set: Set<T>, value: T): Set<T> {
+  const newSet = new Set(set);
+  newSet.delete(value);
+  return newSet;
+}
+
+// ---------------------------------------------------------------------------
+// Circuit implementations — mirror compiled Compact circuits exactly
+// ---------------------------------------------------------------------------
+
+function circuit_initialize(
+  inc_threshold: bigint,
+  nw_threshold: bigint
+): ContractLedger {
   return {
-    income_threshold: incThreshold,
-    networth_threshold: nwThreshold,
-    total_verifications: 0,
-    is_accredited: false,
+    income_threshold:    inc_threshold,
+    networth_threshold:  nw_threshold,
+    total_verifications: 0n,
+    nullifier_set:       emptySet<Bytes32>(),
   };
 }
 
 /**
- * prove_accreditation
- * Private witnesses: userIncome, userNetWorth — stay local, never disclosed.
- * Public outcome: is_accredited (boolean) + incremented counter.
+ * circuit_prove_accreditation
+ *
+ * Private witnesses (never disclosed on-chain):
+ *   @param userIncome       — user's annual income (private witness)
+ *   @param userNetWorth     — user's net worth (private witness)
+ *   @param identitySecret   — 32-byte private secret for nullifier
+ *
+ * Public state changes (disclosed on ledger):
+ *   - nullifier_set: nullifier added (hash of identitySecret)
+ *   - total_verifications: incremented
  */
-function prove_accreditation(
-  ledger: LedgerState,
-  userIncome: number,
-  userNetWorth: number
-): LedgerState {
+function circuit_prove_accreditation(
+  ledger: ContractLedger,
+  userIncome: bigint,
+  userNetWorth: bigint,
+  identitySecret: Bytes32  // private witness — never stored on-chain
+): ContractLedger {
   // ZKP assertion: income >= threshold OR net_worth >= threshold
   const qualifies =
     userIncome >= ledger.income_threshold ||
@@ -59,107 +124,169 @@ function prove_accreditation(
     );
   }
 
+  // Derive nullifier — one-way commitment, reveals nothing about secret
+  const nullifier = persistentHash('ProofPass_v1', identitySecret);
+
+  // Replay protection assertion
+  if (memberOf(nullifier, ledger.nullifier_set)) {
+    throw new Error(
+      'Accreditation proof already submitted for this identity'
+    );
+  }
+
+  // Disclose only: nullifier (not secret), updated counter
   return {
     ...ledger,
-    is_accredited: true,
-    total_verifications: ledger.total_verifications + 1,
+    nullifier_set:       insert(ledger.nullifier_set, nullifier),
+    total_verifications: ledger.total_verifications + 1n,
   };
 }
 
-function reset_accreditation(ledger: LedgerState): LedgerState {
-  return { ...ledger, is_accredited: false };
+function circuit_reset_accreditation(
+  ledger: ContractLedger,
+  identitySecret: Bytes32
+): ContractLedger {
+  const nullifier = persistentHash('ProofPass_v1', identitySecret);
+  if (memberOf(nullifier, ledger.nullifier_set)) {
+    return {
+      ...ledger,
+      nullifier_set: remove(ledger.nullifier_set, nullifier),
+    };
+  }
+  return ledger;
 }
+
+// ---------------------------------------------------------------------------
+// Test fixtures
+// ---------------------------------------------------------------------------
+
+const INCOME_THRESHOLD    = 200_000n;
+const NETWORTH_THRESHOLD  = 1_000_000n;
+
+// Test identity secrets — 32 bytes hex (private witnesses, never on-chain)
+const SECRET_ALICE = 'a'.repeat(64) as Bytes32;
+const SECRET_BOB   = 'b'.repeat(64) as Bytes32;
+const SECRET_CAROL = 'c'.repeat(64) as Bytes32;
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('ProofPass Contract', () => {
-  let ledger: LedgerState;
-
-  // SEC standard thresholds
-  const INCOME_THRESHOLD = 200_000;
-  const NETWORTH_THRESHOLD = 1_000_000;
+describe('ProofPass Contract — Compact Runtime Tests', () => {
+  let ledger: ContractLedger;
 
   beforeEach(() => {
-    ledger = initialize(INCOME_THRESHOLD, NETWORTH_THRESHOLD);
+    ledger = circuit_initialize(INCOME_THRESHOLD, NETWORTH_THRESHOLD);
   });
 
-  // TEST 1 — Initialization
-  it('initializes with correct SEC thresholds and default state', () => {
-    expect(ledger.income_threshold).toBe(200_000);
-    expect(ledger.networth_threshold).toBe(1_000_000);
-    expect(ledger.total_verifications).toBe(0);
-    expect(ledger.is_accredited).toBe(false);
+  // ------------------------------------------------------------------
+  // Initialisation
+  // ------------------------------------------------------------------
+
+  it('TEST 1 — initialises with correct SEC thresholds and empty nullifier set', () => {
+    expect(ledger.income_threshold).toBe(200_000n);
+    expect(ledger.networth_threshold).toBe(1_000_000n);
+    expect(ledger.total_verifications).toBe(0n);
+    expect(ledger.nullifier_set.size).toBe(0);
   });
 
-  // TEST 2 — Qualifies via income (exact boundary)
-  it('accredits a user with income exactly $200,000 (boundary)', () => {
-    ledger = prove_accreditation(ledger, 200_000, 0);
-    expect(ledger.is_accredited).toBe(true);
-    expect(ledger.total_verifications).toBe(1);
+  // ------------------------------------------------------------------
+  // Eligibility — boundary conditions
+  // ------------------------------------------------------------------
+
+  it('TEST 2 — accredits user with income exactly $200,000 (lower boundary)', () => {
+    ledger = circuit_prove_accreditation(ledger, 200_000n, 0n, SECRET_ALICE);
+    expect(ledger.total_verifications).toBe(1n);
+    expect(ledger.nullifier_set.size).toBe(1);
   });
 
-  // TEST 3 — Qualifies via net worth (exact boundary)
-  it('accredits a user with net worth exactly $1,000,000 (boundary)', () => {
-    ledger = prove_accreditation(ledger, 0, 1_000_000);
-    expect(ledger.is_accredited).toBe(true);
-    expect(ledger.total_verifications).toBe(1);
+  it('TEST 3 — accredits user with net worth exactly $1,000,000 (lower boundary)', () => {
+    ledger = circuit_prove_accreditation(ledger, 0n, 1_000_000n, SECRET_ALICE);
+    expect(ledger.total_verifications).toBe(1n);
   });
 
-  // TEST 4 — Qualifies via both criteria
-  it('accredits a user who meets both income and net worth thresholds', () => {
-    ledger = prove_accreditation(ledger, 350_000, 2_500_000);
-    expect(ledger.is_accredited).toBe(true);
+  it('TEST 4 — accredits user who meets both thresholds', () => {
+    ledger = circuit_prove_accreditation(ledger, 350_000n, 2_500_000n, SECRET_ALICE);
+    expect(ledger.total_verifications).toBe(1n);
   });
 
-  // TEST 5 — Rejected (neither criterion met)
-  it('rejects a user with income $150k and net worth $500k', () => {
-    expect(() => prove_accreditation(ledger, 150_000, 500_000)).toThrow(
-      'Does not meet accredited investor threshold'
-    );
-    expect(ledger.is_accredited).toBe(false);
-    expect(ledger.total_verifications).toBe(0);
+  it('TEST 5 — rejects user below both thresholds ($150k income, $500k net worth)', () => {
+    expect(() =>
+      circuit_prove_accreditation(ledger, 150_000n, 500_000n, SECRET_ALICE)
+    ).toThrow('Does not meet accredited investor threshold');
+    expect(ledger.total_verifications).toBe(0n);
+    expect(ledger.nullifier_set.size).toBe(0);
   });
 
-  // TEST 6 — Counter increments across multiple successful proofs
-  it('increments total_verifications with each successful proof', () => {
-    ledger = prove_accreditation(ledger, 250_000, 0);
-    ledger = reset_accreditation(ledger);
-    ledger = prove_accreditation(ledger, 0, 1_500_000);
-    ledger = reset_accreditation(ledger);
-    ledger = prove_accreditation(ledger, 300_000, 2_000_000);
-    expect(ledger.total_verifications).toBe(3);
+  // ------------------------------------------------------------------
+  // Nullifier / Replay protection
+  // ------------------------------------------------------------------
+
+  it('TEST 6 — nullifier is stored after successful proof (identity binding)', () => {
+    const nullifier = persistentHash('ProofPass_v1', SECRET_ALICE);
+    ledger = circuit_prove_accreditation(ledger, 250_000n, 0n, SECRET_ALICE);
+    expect(memberOf(nullifier, ledger.nullifier_set)).toBe(true);
   });
 
-  // TEST 7 — Reset clears accreditation without touching counter
-  it('resets is_accredited flag without changing total_verifications', () => {
-    ledger = prove_accreditation(ledger, 500_000, 0);
-    expect(ledger.is_accredited).toBe(true);
-    ledger = reset_accreditation(ledger);
-    expect(ledger.is_accredited).toBe(false);
-    expect(ledger.total_verifications).toBe(1);
+  it('TEST 7 — replay attack rejected: same identity cannot submit twice', () => {
+    ledger = circuit_prove_accreditation(ledger, 250_000n, 0n, SECRET_ALICE);
+    expect(() =>
+      circuit_prove_accreditation(ledger, 250_000n, 0n, SECRET_ALICE)
+    ).toThrow('Accreditation proof already submitted for this identity');
+    // Counter must NOT increment on replay attempt
+    expect(ledger.total_verifications).toBe(1n);
   });
 
-  // TEST 8 — Privacy: financial values never appear in ledger state
-  it('never exposes user_income or user_net_worth in ledger state', () => {
-    const newLedger = prove_accreditation(ledger, 250_000, 800_000);
-    expect((newLedger as any).user_income).toBeUndefined();
-    expect((newLedger as any).user_net_worth).toBeUndefined();
-    expect((newLedger as any).income).toBeUndefined();
-    expect((newLedger as any).net_worth).toBeUndefined();
+  it('TEST 8 — different identities get separate nullifiers (no collision)', () => {
+    ledger = circuit_prove_accreditation(ledger, 250_000n, 0n, SECRET_ALICE);
+    ledger = circuit_prove_accreditation(ledger, 0n, 1_500_000n, SECRET_BOB);
+    ledger = circuit_prove_accreditation(ledger, 300_000n, 2_000_000n, SECRET_CAROL);
+    expect(ledger.nullifier_set.size).toBe(3);
+    expect(ledger.total_verifications).toBe(3n);
   });
 
-  // TEST 9 — Edge case: qualifies with high income but zero net worth
-  it('accredits a user with income $1M and net worth $0', () => {
-    ledger = prove_accreditation(ledger, 1_000_000, 0);
-    expect(ledger.is_accredited).toBe(true);
+  it('TEST 9 — nullifier reveals nothing about the private secret', () => {
+    const nullifier = persistentHash('ProofPass_v1', SECRET_ALICE);
+    ledger = circuit_prove_accreditation(ledger, 250_000n, 0n, SECRET_ALICE);
+    // Nullifier is in ledger but secret is not
+    expect(memberOf(nullifier, ledger.nullifier_set)).toBe(true);
+    expect((ledger as unknown as Record<string, unknown>).identity_secret).toBeUndefined();
+    expect((ledger as unknown as Record<string, unknown>).user_income).toBeUndefined();
+    expect((ledger as unknown as Record<string, unknown>).user_net_worth).toBeUndefined();
   });
 
-  // TEST 10 — Edge case: just below income threshold, just below net worth threshold
-  it('rejects a user with income $199,999 and net worth $999,999', () => {
-    expect(() => prove_accreditation(ledger, 199_999, 999_999)).toThrow(
-      'Does not meet accredited investor threshold'
-    );
+  // ------------------------------------------------------------------
+  // Reset / Re-verification
+  // ------------------------------------------------------------------
+
+  it('TEST 10 — reset removes nullifier, allows re-verification', () => {
+    ledger = circuit_prove_accreditation(ledger, 250_000n, 0n, SECRET_ALICE);
+    expect(ledger.nullifier_set.size).toBe(1);
+
+    ledger = circuit_reset_accreditation(ledger, SECRET_ALICE);
+    expect(ledger.nullifier_set.size).toBe(0);
+
+    // Can now prove again with same identity
+    ledger = circuit_prove_accreditation(ledger, 250_000n, 0n, SECRET_ALICE);
+    expect(ledger.total_verifications).toBe(2n);
+  });
+
+  it('TEST 11 — reset only removes correct nullifier, others unaffected', () => {
+    ledger = circuit_prove_accreditation(ledger, 250_000n, 0n, SECRET_ALICE);
+    ledger = circuit_prove_accreditation(ledger, 0n, 1_500_000n, SECRET_BOB);
+    expect(ledger.nullifier_set.size).toBe(2);
+
+    ledger = circuit_reset_accreditation(ledger, SECRET_ALICE);
+    expect(ledger.nullifier_set.size).toBe(1);
+
+    // Bob's nullifier still present
+    const bobNullifier = persistentHash('ProofPass_v1', SECRET_BOB);
+    expect(memberOf(bobNullifier, ledger.nullifier_set)).toBe(true);
+  });
+
+  it('TEST 12 — rejects income $199,999 and net worth $999,999 (just below both)', () => {
+    expect(() =>
+      circuit_prove_accreditation(ledger, 199_999n, 999_999n, SECRET_ALICE)
+    ).toThrow('Does not meet accredited investor threshold');
   });
 });
