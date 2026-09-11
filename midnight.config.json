@@ -1,0 +1,5 @@
+{
+  "contractsDir": "contracts",
+  "managedDir": "managed",
+  "network": "preprod"
+}
