@@ -169,7 +169,7 @@ See [docs/USAGE.md](docs/USAGE.md) for a full step-by-step guide written for non
 
 ## Product X Profile
 
-[@ProofPassApp on X](https://x.com/ProofPassApp)
+[@ProofPassAppAdi on X](https://x.com/ProofPassAppAdi)
 
 ---
 
