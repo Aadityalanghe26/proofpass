@@ -25,12 +25,18 @@
     "@midnight-ntwrk/midnight-js-types": "^4.1.1",
     "@midnight-ntwrk/wallet-sdk": "^1.2.0",
     "@midnight-ntwrk/wallet-sdk-facade": "^4.1.0",
+    "@midnight-ntwrk/midnight-js-level-private-state-provider": "^4.1.1",
+    "@midnight-ntwrk/midnight-js-node-zk-config-provider": "^4.1.1",
+    "@midnight-ntwrk/wallet-sdk-dust-wallet": "^4.1.0",
     "@midnight-ntwrk/wallet-sdk-hd": "^3.0.3",
+    "@midnight-ntwrk/wallet-sdk-shielded": "^4.1.0",
+    "@midnight-ntwrk/wallet-sdk-unshielded-wallet": "^4.1.0",
     "effect": "^3.22.2",
     "fast-check": "^4.9.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@types/react": "18.3.3",

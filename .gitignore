@@ -3,4 +3,4 @@ dist/
 .env
 *.local
 .DS_Store
-managed/
+# managed/ is committed so reviewers can see compiled ZK artifacts

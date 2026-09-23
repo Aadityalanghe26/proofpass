@@ -20,7 +20,9 @@
 
 | Network | Address |
 |---------|---------|
-| Preprod | Deployment pending — Midnight registry unreachable from current network. Contract code is complete at `contracts/proofpass.compact`. Demo runs in simulation mode at the live URL above. |
+| Preprod | Deployment in progress — contract compiled, wallet funded (5000 tNIGHT at `mn_addr_preprod178jr8skwwt5wh954k2lg8mxldcy8l2vzyumakqkmhk6s65ukqudspd8s3v`), Preprod blockchain sync running. Address will be updated here once the sync completes and `deployContract()` confirms. |
+
+> The Compact contract is **compiled** — all ZK artifacts (prover keys, verifier keys, ZKIR circuits) are in `managed/`. The deploy script uses `deployContract()` from the official Midnight SDK and calls `initialize()` on-chain immediately after.
 
 ---
 
@@ -49,9 +51,9 @@ The result is a verifiable, auditable, on-chain accreditation proof that DeFi pr
 
 | Category | Detail |
 |----------|--------|
-| **PUBLIC** (on-chain, anyone can verify) | Income threshold ($200,000) · Net worth threshold ($1,000,000) · Total verification count · Accreditation result (true/false) |
-| **PRIVATE** (private witness, never on-chain) | User's actual annual income · User's actual net worth · Any financial documents or identity data |
-| **PROVED without revealing** | `income >= $200,000 OR net_worth >= $1,000,000` — the ZK circuit asserts this relation; the values themselves are never disclosed |
+| **PUBLIC** (on-chain, anyone can verify) | Income threshold ($200,000) · Net worth threshold ($1,000,000) · Total verification count · Nullifier set (one opaque 32-byte commitment per accredited identity — reveals nothing about the identity) |
+| **PRIVATE** (private witness, never on-chain) | User's actual annual income · User's actual net worth · Identity secret (32-byte key from wallet's shielded coin public key) |
+| **PROVED without revealing** | `income >= $200,000 OR net_worth >= $1,000,000` — the ZK circuit asserts this relation and writes only the nullifier; the financial values themselves are never disclosed |
 
 ---
 
@@ -63,7 +65,7 @@ The result is a verifiable, auditable, on-chain accreditation proof that DeFi pr
 | ZK proof system | Built into Midnight's Compact compiler |
 | Frontend | React 18 + TypeScript + Vite |
 | Wallet | Lace (Midnight DApp Connector) |
-| Testing | Vitest (10 passing tests) |
+| Testing | Vitest (19 passing tests — @midnight-ntwrk/compact-runtime built-ins) |
 | CI/CD | GitHub Actions |
 | Hosting | Vercel / Netlify |
 
@@ -111,20 +113,29 @@ npm test
 
 Expected output:
 ```
-✓ tests/proofpass.test.ts (10 tests)
-  ✓ initializes with correct SEC thresholds and default state
-  ✓ accredits a user with income exactly $200,000 (boundary)
-  ✓ accredits a user with net worth exactly $1,000,000 (boundary)
-  ✓ accredits a user who meets both income and net worth thresholds
-  ✓ rejects a user with income $150k and net worth $500k
-  ✓ increments total_verifications with each successful proof
-  ✓ resets is_accredited flag without changing total_verifications
-  ✓ never exposes user_income or user_net_worth in ledger state
-  ✓ accredits a user with income $1M and net worth $0
-  ✓ rejects a user with income $199,999 and net worth $999,999
+✓ tests/proofpass.test.ts (19 tests)
+  ✓ CompactTypeUnsignedInteger (Uint<64>) round-trips SEC thresholds correctly
+  ✓ CompactTypeBytes(32) round-trips 32-byte secrets without corruption
+  ✓ persistentHash() produces deterministic 32-byte nullifiers (real SDK)
+  ✓ persistentHash() produces distinct nullifiers for different secrets
+  ✓ persistentHash() is domain-separated (different domains → different nullifiers)
+  ✓ initialize() sets correct SEC Rule 501 thresholds and empty nullifier_set
+  ✓ prove_accreditation() accredits user with income exactly $200,000 (boundary)
+  ✓ prove_accreditation() accredits user with net worth exactly $1,000,000 (boundary)
+  ✓ prove_accreditation() accredits user meeting both thresholds
+  ✓ prove_accreditation() rejects income $199,999 and net worth $999,999
+  ✓ prove_accreditation() rejects income $150k and net worth $500k
+  ✓ nullifier stored on-chain is the exact SDK persistentHash output (binding)
+  ✓ replay attack rejected: same identity cannot submit twice
+  ✓ proof cannot be overwritten: different qualifying amounts, same identity, still rejected
+  ✓ three distinct identities get three separate nullifiers (no collision)
+  ✓ ledger exposes only nullifier and counter; private witnesses are absent
+  ✓ reset_accreditation() removes nullifier, allows re-verification
+  ✓ reset_accreditation() removes only the targeted nullifier, others unaffected
+  ✓ reset_accreditation() on unknown nullifier is a no-op
 
 Test Files  1 passed (1)
-     Tests  10 passed (10)
+     Tests  19 passed (19)
 ```
 
 ---
@@ -146,18 +157,28 @@ See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 ## Deploy Contract to Preprod
 
 ```bash
-# 1. Compile the contract
+# 1. Compile the contract (requires Docker + Midnight CLI)
 compact compile contracts/proofpass.compact --output managed/
 
-# 2. Deploy to Preprod
-midnight deploy \
-  --network preprod \
-  --contract managed/proofpass \
-  --init-circuit initialize \
-  --init-args 200000 1000000
+# 2. Set environment variables
+export WALLET_SEED=<64-char-hex-seed>   # funded from https://faucet.midnight.network
+
+# 3. Deploy to Preprod (calls deployContract() + initialize() in one script)
+node scripts/deploy.mjs
 ```
 
-After deploying, paste the contract address into `.env` and the Contract Address table above.
+The deploy script:
+1. Connects to Midnight Preprod using the official SDK wallet providers
+2. Calls `deployContract()` to deploy the compiled contract
+3. Immediately calls the `initialize()` circuit to set `income_threshold = $200,000` and `networth_threshold = $1,000,000` on-chain
+4. Saves the contract address to `deployment.json`
+
+After deploying, set the contract address in `.env` and redeploy the frontend:
+
+```bash
+echo "VITE_CONTRACT_ADDRESS=<address from deployment.json>" >> .env
+npm run build
+```
 
 ---
 
@@ -169,7 +190,7 @@ See [docs/USAGE.md](docs/USAGE.md) for a full step-by-step guide written for non
 
 ## Product X Profile
 
-[@ProofPassAppAdi on X](https://x.com/ProofPassAppAdi)
+[@ProofPass on X](https://x.com/ProofPass)
 
 ---
 

@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "file": "index.js",
+  "sourceRoot": "../../",
+  "sources": ["contracts/proofpass.compact", "compiler/zkir-v3-library.compact"],
+  "names": [],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;EAAA;;;;;;;;;;;;;;;;;;;MAmCA,AAAA,UAIC;;;;;cAJyB,eAAuB;cAAE,cAAsB;;;;;;;;;;;;;;;;;;;;;;;;;yCAA/C,eAAuB,+BAAE,cAAsB;;;;;;;;;kDAA/C,eAAuB;kDAAE,cAAsB;;;;OAIxE;MAKD,AAAA,mBAmBC;;;;;;;;;;;;;;;;;;;;;;;;OAAA;MAID,AAAA,mBAOC;;;;;;;;;;;;;;;;;;;;;;;;OAAA;;;;;;;;;;;;GACA;EA3ED;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;IAqBA;;;;;;;;;yEAAyC;IACzC;;;;;;;;;yEAA2C;IAC3C;;;;;;;;;yEAA4C;IAC5C;;;;;;;;;;yEAA4C;;;;;;;GAmD3C;EC3ED,AAAA,kBAAA;oEAAA;;;ED4BA,AAAA,cAAgC;;0DAAhC,WAAgC;;;;;;;;;;;;;;GAAA;EAChC,AAAA,iBAAmC;;0DAAnC,cAAmC;;;;;;;;;;;;;;GAAA;EACnC,AAAA,kBAAqC;;0DAArC,eAAqC;;;;;;;;;;;;;;GAAA;EAKrC,AAAA,mBAIC,4BAJyB,eAAuB,EAAE,cAAsB;;IACvE;;;;;;;2HAA+B,eAAa;;yEAA5B;IAChB;;;;;;;2HAA+B,cAAY;;yEAAzB;UAClB,KAAmB;IAAnB;;;;;;;2HAAA,KAAmB;;yEAAA;;GACpB;EAKD,AAAA,4BAmBC;UAlBO,QAAoC;UACpC,WAAuC;UACvC,QAAwC;UAGxC,cAAoD,GAA1B,QAAM;;mDAAI;;;;;;;;;;;wHAAgB;UACpD,gBAAyD,GAA/B,WAAS;;qDAAI;;;;;;;;;;;0HAAkB;4BACxD,cAAY,IAAI,gBAAc;;UAG/B,WAAkE,0BAAR,QAAM;qDAG9D;;;;;;;;;;;4KAAqB,WAAS;;;;0HAAjB;;IAGrB;;;;;;;;;;2HAAqB,WAAS;;;;;wEAAjB;UACb,KAAmB;;;;;6CAAa;;;;;;;;;;;kHAAmB;;;IAAnD;;;;;;;2HAAA,KAAmB;;yEAAA;;GACpB;EAID,AAAA,4BAOC;UANO,QAAwC;UACxC,WAAkE,0BAAR,QAAM;gCAElE;;;;;;;;;;;uJAAqB,WAAS;;;;qGAAjB;;MACf;;;;;;;;;;6HAAqB,WAAS;;;0EAAjB;;;GAEhB;;;;;;;;;;;;;;;;IArDD;qCAAA;;;;;;;;;;;0GAAyC;KAAA;IACzC;qCAAA;;;;;;;;;;;0GAA2C;KAAA;IAC3C;qCAAA;;;;;;;;;;;0GAA4C;KAAA;IAC5C;;;;;uCAAA;;;;;;;;;;;;;;;;4GAA4C;;;;;;uCAA5C;;;;;;;;;;;;4GAA4C;;;;;;;;;;;;;;uCAA5C;;;;;;;;;;;;;;;4GAA4C;;;;;;;;;KAAA;;;;;;;;;;;;;;;;;;;;"
+}
