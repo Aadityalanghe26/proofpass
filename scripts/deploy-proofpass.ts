@@ -41,16 +41,37 @@ if (!fs.existsSync(contractPath)) {
 }
 
 const ProofPass = await import(pathToFileURL(contractPath).href);
-const compiledContract = CompiledContract.make('proofpass', ProofPass.Contract).pipe(
-  CompiledContract.withVacantWitnesses,
-  CompiledContract.withCompiledFileAssets(zkConfigPath),
-);
 
-async function createProviders(walletCtx: WalletContext) {
+// Witness stubs required by the Contract constructor.
+// The initialize() circuit has no witnesses — these stubs satisfy the type
+// check but are never invoked during deployment.
+const witnessStubs = {
+  user_income:     (_ctx: unknown) => [undefined, 0n] as [unknown, bigint],
+  user_net_worth:  (_ctx: unknown) => [undefined, 0n] as [unknown, bigint],
+  identity_secret: (_ctx: unknown) => [undefined, new Uint8Array(32)] as [unknown, Uint8Array],
+};
+
+// Build CompiledContract using withWitnesses (not withVacantWitnesses which sets witnesses:{})
+const baseContract = CompiledContract.make('proofpass', ProofPass.Contract);
+const withAssets = CompiledContract.withCompiledFileAssets(zkConfigPath)(baseContract);
+// Apply witnesses directly using the internal TypeId symbol
+const TypeId = Object.getOwnPropertySymbols(withAssets).find(
+  s => s.toString().includes('compact-js/CompiledContract')
+) ?? Object.getOwnPropertySymbols(withAssets)[0];
+const compiledContract = {
+  ...withAssets,
+  [TypeId]: {
+    ...withAssets[TypeId as keyof typeof withAssets],
+    witnesses: witnessStubs,
+  },
+} as any;
+
+async function createProviders(walletCtx: WalletContext, state: any) {
   const privateStatePassword = process.env.PRIVATE_STATE_PASSWORD?.trim() || 'ProofPass-Preprod-PrivState-Key-1';
+
   const walletProvider = {
-    getCoinPublicKey: () => walletCtx.shieldedSecretKeys.coinPublicKey,
-    getEncryptionPublicKey: () => walletCtx.shieldedSecretKeys.encryptionPublicKey,
+    getCoinPublicKey: () => state.shielded.coinPublicKey,
+    getEncryptionPublicKey: () => state.shielded.encryptionPublicKey,
     async balanceTx(tx: any, ttl?: Date) {
       const recipe = await walletCtx.wallet.balanceUnboundTransaction(
         tx,
@@ -141,7 +162,7 @@ async function main() {
   console.log('✓ DUST ready\n');
 
   console.log('Deploying ProofPass contract...');
-  const providers = await createProviders(walletCtx);
+  const providers = await createProviders(walletCtx, state);
 
   await new Promise((r) => setTimeout(r, 6000));
 

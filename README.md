@@ -1,6 +1,6 @@
 # ProofPass — Private Accredited Investor Verification
 
-![CI](https://github.com/YOUR_GITHUB_USERNAME/proofpass/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/Aadityalanghe26/proofpass/actions/workflows/ci.yml/badge.svg)
 
 > Prove you meet SEC accredited investor thresholds — without revealing your income or net worth. Zero-knowledge proofs on Midnight Network.
 
@@ -85,7 +85,7 @@ The result is a verifiable, auditable, on-chain accreditation proof that DeFi pr
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YOUR_GITHUB_USERNAME/proofpass.git
+git clone https://github.com/Aadityalanghe26/proofpass.git
 cd proofpass
 
 # 2. Install dependencies

@@ -1,0 +1,24 @@
+pragma language_version 0.26;
+import CompactStandardLibrary;
+export ledger s: Set<Bytes<32>>;
+export ledger income_threshold: Uint<64>;
+witness secret(): Bytes<32>;
+witness user_income(): Uint<64>;
+export circuit initialize(threshold: Uint<64>): [] {
+  income_threshold = disclose(threshold);
+}
+export circuit test(): [] {
+  const income: Uint<64> = user_income();
+  const meets: Boolean = income >= income_threshold;
+  assert(meets, "below threshold");
+  const v: Bytes<32> = secret();
+  const h: Bytes<32> = disclose(persistentHash<Bytes<32>>(v));
+  s.insert(h);
+}
+export circuit reset(): [] {
+  const v: Bytes<32> = secret();
+  const h: Bytes<32> = disclose(persistentHash<Bytes<32>>(v));
+  if (s.member(h)) {
+    s.remove(h);
+  }
+}
