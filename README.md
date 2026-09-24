@@ -190,7 +190,8 @@ See [docs/USAGE.md](docs/USAGE.md) for a full step-by-step guide written for non
 
 ## Product X Profile
 
-[@ProofPass on X](https://x.com/ProofPass)
+[https://x.com/AadityaLanghe](https://x.com/AadityaLanghe)
+([@AadityaLanghe on X](https://x.com/AadityaLanghe))
 
 ---
 
