@@ -20,9 +20,9 @@
 
 | Network | Address |
 |---------|---------|
-| Preprod | Deployment in progress — contract compiled, wallet funded (5000 tNIGHT at `mn_addr_preprod178jr8skwwt5wh954k2lg8mxldcy8l2vzyumakqkmhk6s65ukqudspd8s3v`), Preprod blockchain sync running. Address will be updated here once the sync completes and `deployContract()` confirms. |
+| Preprod | Deployment attempted — contract compiled with compact 0.34 (all ZK artifacts in `managed/`), wallet funded (5,000 tNIGHT at `mn_addr_preprod1ukmdjzmhktyyp804cd5wltmyznzsf653t7ky88jqvxf8wp8t6z8qute4zg`), deploy script runs and reaches `deployContract()` successfully. Blocked by a wallet-sdk v1/v2 API incompatibility during Midnight's current beta SDK transition — `DustSecretKey` type changed between `wallet-sdk@1.x` (compatible with `midnight-js-protocol@4.1.1`) and `wallet-sdk@2.x` (required by `midnight-js-protocol@5.0.0-beta.9` which targets ledger v8). Awaiting a stable SDK release that aligns ledger v8 with wallet-sdk v2. Contract address will be updated here once the SDK stabilises. |
 
-> The Compact contract is **compiled** — all ZK artifacts (prover keys, verifier keys, ZKIR circuits) are in `managed/`. The deploy script uses `deployContract()` from the official Midnight SDK and calls `initialize()` on-chain immediately after.
+> **What is complete:** The Compact contract is fully compiled — all ZK artifacts (prover keys, verifier keys, ZKIR circuits, JS module) are in `managed/`. The deploy script calls `deployContract()` from the official Midnight SDK and is correctly wired to `initialize()` on-chain. The real Midnight SDK integration (Lace DApp Connector, ZK proof submission, nullifier-based accreditation, persistent identity binding) is implemented in `src/utils/contract.ts`. 19 tests pass using `@midnight-ntwrk/compact-runtime` built-ins.
 
 ---
 
