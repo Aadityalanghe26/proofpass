@@ -8,7 +8,7 @@
 
 ## Live Demo
 
-[https://proofpass-eight.vercel.app](https://proofpass-eight.vercel.app)
+[https://proofpass-nu.vercel.app](https://proofpass-nu.vercel.app)
 
 ## Demo Video
 
